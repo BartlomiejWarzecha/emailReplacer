@@ -4,19 +4,38 @@ class TemplateDataIntegrator
       @module_data = extract_module_data(@nested_modules)
       puts "Found nested modules: #{@module_data.keys}"
     end
-  
-    def fill_template(template_path)
-      template = File.read(template_path)
-      puts "\nFilling template with nested module data..."
-      result = process_data_placeholders(template)
-      
-      # Save final result
-      File.write('final_template.html', result)
-      puts "Template filled and saved to: final_template.html"
-      
-      result
+
+            
+    def process_templates
+        # Create future_emails directory if it doesn't exist
+        Dir.mkdir('future_emails_end') unless Dir.exist?('future_emails_end')
+            
+        # Process all HTML files in current_emails directory
+        Dir.glob('future_emails_schema/*.html') do |email_file|
+        process_single_template(email_file)
+        end
     end
-  
+
+    def process_single_template(email_path)
+        template = File.read(email_path)
+        filename = File.basename(email_path)
+        puts "\nProcessing template: #{filename}"
+    
+        has_changes = false
+        result = process_data_placeholders(template)
+    
+    if template != result
+      has_changes = true
+      output_path = File.join('future_emails_end', filename)
+      File.write(output_path, result)
+      puts "Changes detected - Saved to: #{output_path}"
+    else
+      puts "No changes needed for: #{filename}"
+    end
+    
+    has_changes
+  end
+
     private
   
     def process_data_placeholders(content)
@@ -61,7 +80,7 @@ class TemplateDataIntegrator
     begin
       puts "Starting nested module integration..."
       integrator = TemplateDataIntegrator.new('nested_modules.html')
-      integrator.fill_template('email_with_full_module_structure.html')
+      integrator.process_templates
       puts "\nProcessing completed!"
     rescue StandardError => e
       puts "Error: #{e.message}"
